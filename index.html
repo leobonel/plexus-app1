@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>PLEXUSOLAR - Presupuesto FV</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0a0a">
+
+<style>
+  body { font-family: Arial; padding: 20px; max-width: 700px; margin: auto; }
+  h1 { margin-bottom: 0; }
+  .box { border: 1px solid #ccc; padding: 15px; border-radius: 10px; }
+  input, select { width: 100%; padding: 5px; margin-top: 5px; margin-bottom: 10px; }
+  button { padding: 10px; margin-top: 10px; }
+  .result { margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; }
+  .warn { color: red; font-weight: bold; }
+</style>
+
+</head>
+
+<body>
+
+<button id="instalarBtn" style="display:none;">Instalar App</button>
+
+<div class="box">
+
+<h1>PLEXUSOLAR</h1>
+<div>Leonardo Bonel</div>
+<div>CUIT: 23-28851599-9</div>
+
+<hr>
+
+<div>Fecha: <span id="fecha"></span></div>
+
+<label>Cotización USD</label> 
+<input type="number" id="usd" value="1000" />
+
+<label>N° Presupuesto</label> 
+<input id="numero" />
+
+<label>Cliente</label> 
+<input id="cliente" />
+
+<label>Ubicación</label> 
+<input id="ubicacion" />
+
+<hr>
+
+<h3>Datos del sistema</h3>
+
+<label>Tipo de sistema</label> 
+<select id="tipo" onchange="handleTipo()">
+  <option value="on">On-Grid</option>
+  <option value="off">Off-Grid / Híbrido</option>
+</select>
+
+<label>¿Incluye baterías?</label> 
+<select id="bateria">
+  <option value="no">No</option>
+  <option value="si">Sí</option>
+</select>
+
+<label>¿Hay red eléctrica?</label> 
+<select id="red">
+  <option value="si">Sí</option>
+  <option value="no">No</option>
+</select>
+
+<label>Potencia inversor (W)</label> 
+<input type="number" id="invW" value="5000" />
+
+<h4>Cálculo de paneles</h4>
+
+<label>Cantidad de paneles</label>
+<input type="number" id="cantPaneles" value="10" oninput="calcPaneles()" />
+
+<label>Potencia por panel (W)</label> 
+<input type="number" id="potPanel" value="550" oninput="calcPaneles()" />
+
+<label>Potencia paneles a instalar (W)</label> 
+<input type="number" id="panelW" readonly />
+
+<label>Equipamiento (ARS)</label> 
+<input type="number" id="equipos" />
+
+<label>Complejidad</label> 
+<select id="complejidad">
+  <option value="simple">Simple</option>
+  <option value="compleja">Compleja</option>
+</select>
+
+<label>¿Usar USD/W manual?</label> 
+<select id="manual" onchange="toggleManual()">
+  <option value="no">No</option>
+  <option value="si">Sí</option>
+</select>
+
+<label>Valor USD/W</label> 
+<input type="number" id="usdW" value="0.2" disabled />
+
+<hr>
+
+<h3>Logística</h3>
+
+<label>Altura (m)</label> <input id="altura" />
+
+<label>Acceso complejo</label> 
+<select id="acceso">
+  <option value="no">No</option>
+  <option value="si">Sí</option>
+</select>
+
+<label>Distancia (km)</label> 
+<input type="number" id="km" value="10" />
+
+<label>Observaciones</label> 
+<input id="obs" />
+
+<button onclick="calcular()">Calcular</button>
+
+<div class="result" id="resultado"></div>
+
+<button onclick="window.print()">Exportar PDF</button>
+
+</div>
+
+<script>
+
+// ===== INSTALACIÓN =====
+let deferredPrompt;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  const btn = document.getElementById("instalarBtn");
+  btn.style.display = "block";
+
+  btn.onclick = () => {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+    });
+  };
+});
+
+// ===== LÓGICA =====
+
+document.getElementById("fecha").innerText = new Date().toLocaleDateString();
+
+function calcPaneles(){
+  let cant = Number(document.getElementById("cantPaneles").value);
+  let pot = Number(document.getElementById("potPanel").value);
+  document.getElementById("panelW").value = cant * pot;
+}
+
+function handleTipo(){
+  let tipo = document.getElementById("tipo").value;
+  let bateria = document.getElementById("bateria");
+  let red = document.getElementById("red");
+  let equipos = document.getElementById("equipos");
+
+  if(tipo === "on"){
+    bateria.disabled = true;
+    red.disabled = true;
+    equipos.disabled = true;
+  } else {
+    bateria.disabled = false;
+    red.disabled = false;
+    equipos.disabled = false;
+  }
+}
+
+function toggleManual(){
+  let manual = document.getElementById("manual").value;
+  document.getElementById("usdW").disabled = manual !== "si";
+}
+
+function getUSDW(powerW, complejidad, manual, usdW){
+  if(manual === "si") return usdW;
+
+  let kWp = powerW / 1000;
+
+  if(kWp <= 10){
+    return complejidad === "simple" ? 0.15 : 0.22;
+  } else {
+    return 0.19;
+  }
+}
+
+function calcular(){
+
+  let tipo = document.getElementById("tipo").value;
+  let bateria = document.getElementById("bateria").value;
+
+  let invW = Number(document.getElementById("invW").value);
+  let panelW = Number(document.getElementById("panelW").value);
+
+  let powerW = Math.min(invW || 0, panelW || 0);
+
+  let equiposARS = Number(document.getElementById("equipos").value);
+  let complejidad = document.getElementById("complejidad").value;
+  let manual = document.getElementById("manual").value;
+  let usdW = Number(document.getElementById("usdW").value);
+  let km = Number(document.getElementById("km").value);
+  let usd = Number(document.getElementById("usd").value);
+
+  let altura = document.getElementById("altura").value;
+  let acceso = document.getElementById("acceso").value;
+  let red = document.getElementById("red").value;
+  let obs = document.getElementById("obs").value;
+
+  let labor = 0;
+
+  if(tipo === "on"){
+    labor = powerW * getUSDW(powerW, complejidad, manual, usdW);
+  } else {
+    if(bateria === "si"){
+      let equiposUSD = equiposARS / usd;
+      labor = equiposUSD * 0.16;
+    } else {
+      labor = powerW * getUSDW(powerW, complejidad, manual, usdW);
+    }
+  }
+
+  let viaticos = km * 2 * 243;
+
+  let totalUSD = labor + (viaticos / usd);
+  let totalARS = totalUSD * usd;
+
+  let warning = "";
+  if(panelW < invW){
+    warning = "<div class='warn'>⚠️ Sistema subdimensionado en paneles respecto al inversor</div>";
+  }
+
+  document.getElementById("resultado").innerHTML = `
+    ${warning}
+    <b>Mano de obra:</b> USD ${labor.toFixed(1)} <br>
+    <b>Viáticos:</b> ARS ${viaticos.toFixed(1)} <br>
+    <b>Total:</b> USD ${totalUSD.toFixed(1)} <br>
+    <b>Total:</b> ARS ${totalARS.toFixed(1)} <br><br>
+
+    <b>Potencia considerada:</b> ${powerW} W <br>
+
+    <b>Altura:</b> ${altura || "-"} m | 
+    <b>Acceso complejo:</b> ${acceso} <br>
+    <b>Red en sitio:</b> ${tipo === "off" ? red : "-"} <br>
+    <b>Observaciones:</b> ${obs || "-"} <br><br>
+
+    <i>El presente reviste carácter de PRESUPUESTO.</i>
+  `;
+}
+
+calcPaneles();
+handleTipo();
+toggleManual();
+
+</script>
+
+</body>
+</html>
