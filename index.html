@@ -9,6 +9,11 @@
 <link rel="icon" href="icon-192.png">
 
 <style>
+
+* {
+  box-sizing: border-box; /* 🔥 ARREGLA DESBORDES */
+}
+
 body {
   font-family: Arial, sans-serif;
   padding: 20px;
@@ -62,52 +67,38 @@ button {
   border-radius:5px;
 }
 
-.usdW-info { font-size:12px; color:#555; }
-.result { margin-top:20px; }
 .warn { color:red; font-weight:bold; }
 
-.resultado-print { display:none; }
+.result { margin-top:20px; }
+
+/* 🔥 PRINT CORREGIDO */
+#printArea {
+  display:none;
+}
 
 @media print {
-  body * { visibility:hidden; }
 
-  .resultado-print, .resultado-print * {
-    visibility:visible;
+  body * {
+    display: none;
   }
 
-  .resultado-print {
-    position:absolute;
-    top:0;
-    left:0;
-    width:100%;
+  #printArea {
+    display:block;
     padding:30px;
     font-size:14px;
   }
 
-  .print-header {
-    display:flex;
-    justify-content:space-between;
-    border-bottom:2px solid black;
-    margin-bottom:20px;
-    padding-bottom:10px;
+  #printArea * {
+    display:block;
   }
 
-  .print-section {
+  .print-header {
+    border-bottom:2px solid black;
     margin-bottom:15px;
   }
 
-  table {
-    width:100%;
-    border-collapse:collapse;
-  }
-
-  th, td {
-    border:1px solid #ccc;
-    padding:8px;
-  }
-
-  th { background:#eee; }
 }
+
 </style>
 </head>
 
@@ -195,12 +186,7 @@ button {
   <option value="compleja">Compleja</option>
 </select>
 
-<label>¿Usar USD/W manual?
-<span class="usdW-info">
-(Simple ≤10 kWp: 0.10 | Compleja ≤10 kWp: 0.15 | >10 kWp: 0.15)
-</span>
-</label>
-
+<label>¿Usar USD/W manual?</label>
 <select id="manual" onchange="toggleManual()">
   <option value="no">No</option>
   <option value="si">Sí</option>
@@ -238,7 +224,7 @@ button {
 
 <button onclick="imprimir()">Exportar PDF</button>
 
-<div id="printArea" class="resultado-print"></div>
+<div id="printArea"></div>
 
 <script>
 
@@ -328,7 +314,6 @@ function calcular(){
  <b>Viáticos:</b> ARS ${viaticos.toFixed(0)} <br>
  <b>Total:</b> USD ${totalUSD.toFixed(1)} <br>
  <b>Total:</b> ARS ${totalARS.toFixed(0)} <br><br>
- <b>Potencia considerada:</b> ${powerW} W <br><br>
  <i>El presente reviste carácter de PRESUPUESTO.</i>
  `;
 }
@@ -341,30 +326,19 @@ function imprimir(){
    return;
  }
 
- let texto = resultado.innerText;
-
  printArea.innerHTML = `
  <div class="print-header">
-   <div>
-     <h2>PLEXUSOLAR</h2>
-     <div>CUIT: 23-28851599-9</div>
-   </div>
-   <div>
-     <b>Presupuesto:</b> ${numero.value}<br>
-     <b>Fecha:</b> ${fecha.innerText}
-   </div>
+   <h2>PLEXUSOLAR</h2>
+   CUIT: 23-28851599-9
  </div>
 
- <div class="print-section">
-   <b>Punto de venta:</b> ${puntoVenta.options[puntoVenta.selectedIndex].text}<br>
-   <b>Cliente:</b> ${cliente.value}<br>
-   <b>Ubicación:</b> ${ubicacion.value}
- </div>
+ <b>Presupuesto:</b> ${numero.value}<br>
+ <b>Fecha:</b> ${fecha.innerText}<br><br>
 
- <div class="print-section">
-   <b>Resultado</b><br><br>
-   ${texto}
- </div>
+ <b>Cliente:</b> ${cliente.value}<br>
+ <b>Ubicación:</b> ${ubicacion.value}<br><br>
+
+ ${resultado.innerHTML}
  `;
 
  window.print();
