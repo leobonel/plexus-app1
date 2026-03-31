@@ -326,19 +326,69 @@ function imprimir(){
    return;
  }
 
+ let inv = Number(invW.value || 0);
+ let pan = Number(panelW.value || 0);
+ let powerW = Math.min(inv, pan);
+
+ let warning = pan < inv
+   ? "<div class='warn'>⚠️ Sistema subdimensionado en paneles respecto al inversor</div>"
+   : "";
+
  printArea.innerHTML = `
+
  <div class="print-header">
    <h2>PLEXUSOLAR</h2>
-   CUIT: 23-28851599-9
+   <div>CUIT: 23-28851599-9</div>
  </div>
 
- <b>Presupuesto:</b> ${numero.value}<br>
- <b>Fecha:</b> ${fecha.innerText}<br><br>
+ <div class="print-section">
+   <b>Presupuesto:</b> ${numero.value}<br>
+   <b>Fecha:</b> ${fecha.innerText}<br>
+   <b>Punto de venta:</b> ${puntoVenta.options[puntoVenta.selectedIndex].text}
+ </div>
 
- <b>Cliente:</b> ${cliente.value}<br>
- <b>Ubicación:</b> ${ubicacion.value}<br><br>
+ <div class="print-section">
+   <b>Cliente:</b> ${cliente.value}<br>
+   <b>Ubicación:</b> ${ubicacion.value}
+ </div>
 
- ${resultado.innerHTML}
+ <div class="print-section">
+   <b>Datos del sistema</b><br><br>
+
+   Tipo: ${tipo.options[tipo.selectedIndex].text}<br>
+   Potencia inversor: ${inv} W<br>
+   Potencia paneles: ${pan} W<br>
+   Cantidad de paneles: ${cantPaneles.value}<br>
+   Potencia por panel: ${potPanel.value} W<br>
+   Potencia considerada: ${powerW} W<br>
+
+   Complejidad: ${complejidad.options[complejidad.selectedIndex].text}<br>
+   Baterías: ${bateria.value}<br>
+   Red eléctrica: ${red.value}
+ </div>
+
+ <div class="print-section">
+   <b>Logística</b><br><br>
+
+   Altura: ${altura.value || "-"} m<br>
+   Acceso complejo: ${acceso.value}<br>
+   Distancia: ${km.value} km
+ </div>
+
+ <div class="print-section">
+   <b>Resultado económico</b><br><br>
+   ${resultado.innerHTML}
+ </div>
+
+ ${warning}
+
+ <div class="print-section">
+   <b>Observaciones:</b><br>
+   ${obs.value || "-"}
+ </div>
+
+ <br><br>
+ <i>El presente reviste carácter de PRESUPUESTO.</i>
  `;
 
  window.print();
