@@ -7,95 +7,143 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a0a0a">
 
+<link rel="icon" href="icon-192.png">
+
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    max-width: 700px;
-    margin: auto;
-    background: #f4f6f8;
-  }
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  max-width: 700px;
+  margin: auto;
+  background: #f4f6f8;
+}
 
-  #instalarBtn { display:none; }
+#instalarBtn {
+  display:none;
+  width:100%;
+  padding:10px;
+  margin-bottom:15px;
+  border-radius:8px;
+  background:#28a745;
+  color:white;
+  border:none;
+  font-weight:bold;
+}
 
-  .app-header {
-    display:flex;
-    align-items:center;
-    gap:15px;
-    padding:12px;
-    background:#0a0a0a;
-    color:white;
-    border-radius:10px;
-  }
+.app-header {
+  display:flex;
+  gap:15px;
+  padding:12px;
+  background:#0a0a0a;
+  color:white;
+  border-radius:10px;
+}
 
-  .form-section {
-    background:#fff;
-    padding:15px;
-    border-radius:10px;
-    margin-top:15px;
-  }
+.form-section {
+  background:#fff;
+  padding:15px;
+  border-radius:10px;
+  margin-top:15px;
+}
 
-  label { display:block; margin-top:10px; font-weight:bold; }
+label { display:block; margin-top:10px; font-weight:bold; }
 
-  input, select {
-    width:100%;
-    padding:8px;
-    margin-top:4px;
-  }
+input, select {
+  width:100%;
+  padding:8px;
+  margin-top:4px;
+}
 
-  button {
-    margin-top:15px;
-    padding:10px;
-    background:#0a0a0a;
-    color:white;
-    border:none;
+button {
+  margin-top:10px;
+  padding:10px;
+  border:none;
+  background:#0a0a0a;
+  color:white;
+  border-radius:5px;
+}
+
+.usdW-info {
+  font-size:12px;
+  color:#555;
+}
+
+.result { margin-top:20px; }
+.warn { color:red; font-weight:bold; }
+
+/* ===== PRINT PRO ===== */
+.resultado-print { display:none; }
+
+@media print {
+
+  body * { visibility:hidden; }
+
+  .resultado-print, .resultado-print * {
+    visibility:visible;
   }
 
   .resultado-print {
-    display:none;
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    padding:30px;
+    font-size:14px;
   }
 
-  /* ===== IMPRESIÓN ===== */
-  @media print {
-
-    body * {
-      visibility: hidden;
-    }
-
-    .resultado-print, .resultado-print * {
-      visibility: visible;
-    }
-
-    .resultado-print {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-    }
-
-    .print-header {
-      border-bottom: 2px solid black;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-    }
-
-    .print-section {
-      margin-bottom: 15px;
-    }
-
-    .print-title {
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
+  .print-header {
+    display:flex;
+    justify-content:space-between;
+    border-bottom:2px solid black;
+    margin-bottom:20px;
+    padding-bottom:10px;
   }
+
+  .print-title {
+    font-size:20px;
+    font-weight:bold;
+  }
+
+  .print-section {
+    margin-bottom:20px;
+  }
+
+  .print-box {
+    border:1px solid #ccc;
+    padding:10px;
+    border-radius:5px;
+  }
+
+  table {
+    width:100%;
+    border-collapse:collapse;
+  }
+
+  th, td {
+    border:1px solid #ccc;
+    padding:8px;
+    text-align:left;
+  }
+
+  th {
+    background:#f0f0f0;
+  }
+
+  .total {
+    font-size:16px;
+    font-weight:bold;
+  }
+}
 </style>
 </head>
 
 <body>
 
+<button id="instalarBtn">Instalar App</button>
+
 <div class="app-header">
   <div>
-    <div style="font-size:20px; font-weight:bold;">PLEXUSOLAR</div>
+    <div style="font-size:20px;"><b>PLEXUSOLAR</b></div>
     <div style="font-size:12px;">Leonardo Bonel</div>
     <div style="font-size:11px;">CUIT: 23-28851599-9</div>
   </div>
@@ -107,10 +155,10 @@
 <span id="fecha"></span>
 
 <label>Cotización USD</label> 
-<input type="number" id="usd" value="1000" />
+<input type="number" id="usd" value="1000">
 
 <label>N° Presupuesto</label> 
-<input id="numero" readonly />
+<input id="numero" readonly>
 
 <label>Punto de Venta</label>
 <select id="puntoVenta" onchange="generarNumero()">
@@ -121,10 +169,10 @@
 </select>
 
 <label>Cliente</label> 
-<input id="cliente" />
+<input id="cliente">
 
 <label>Ubicación</label> 
-<input id="ubicacion" />
+<input id="ubicacion">
 
 </div>
 
@@ -132,17 +180,40 @@
 
 <h3>Datos del sistema</h3>
 
+<label>Tipo de sistema</label> 
+<select id="tipo" onchange="handleTipo()">
+  <option value="on">On-Grid</option>
+  <option value="off">Off-Grid / Híbrido</option>
+</select>
+
+<label>¿Incluye baterías?</label> 
+<select id="bateria">
+  <option value="no">No</option>
+  <option value="si">Sí</option>
+</select>
+
+<label>¿Hay red eléctrica?</label> 
+<select id="red">
+  <option value="si">Sí</option>
+  <option value="no">No</option>
+</select>
+
 <label>Potencia inversor (W)</label> 
-<input type="number" id="invW" value="5000" />
+<input type="number" id="invW" value="5000">
+
+<h4>Cálculo de paneles</h4>
 
 <label>Cantidad de paneles</label>
-<input type="number" id="cantPaneles" value="10" oninput="calcPaneles()" />
+<input type="number" id="cantPaneles" value="10" oninput="calcPaneles()">
 
 <label>Potencia por panel (W)</label> 
-<input type="number" id="potPanel" value="550" oninput="calcPaneles()" />
+<input type="number" id="potPanel" value="550" oninput="calcPaneles()">
 
 <label>Potencia paneles (W)</label> 
-<input id="panelW" readonly />
+<input id="panelW" readonly>
+
+<label>Equipamiento (ARS)</label> 
+<input type="number" id="equipos">
 
 <label>Complejidad</label> 
 <select id="complejidad">
@@ -150,80 +221,179 @@
   <option value="compleja">Compleja</option>
 </select>
 
+<label>¿Usar USD/W manual?
+<span class="usdW-info">
+(Simple ≤10 kWp: 0.10 | Compleja ≤10 kWp: 0.15 | >10 kWp: 0.15)
+</span>
+</label>
+
+<select id="manual" onchange="toggleManual()">
+  <option value="no">No</option>
+  <option value="si">Sí</option>
+</select>
+
+<label>Valor USD/W</label> 
+<input type="number" id="usdW" value="0.2" disabled>
+
 </div>
 
+<div class="form-section">
+
+<h3>Logística</h3>
+
+<label>Altura (m)</label>
+<input id="altura">
+
+<label>Acceso complejo</label>
+<select id="acceso">
+  <option value="no">No</option>
+  <option value="si">Sí</option>
+</select>
+
+<label>Distancia (km)</label>
+<input type="number" id="km" value="10">
+
+<label>Observaciones</label>
+<input id="obs">
+
 <button onclick="calcular()">Calcular</button>
+
+</div>
+
+<div class="result" id="resultado"></div>
+
 <button onclick="imprimir()">Exportar PDF</button>
 
-<div id="resultado"></div>
-
-<!-- ===== PLANTILLA PDF ===== -->
-<div class="resultado-print" id="printArea"></div>
+<div id="printArea" class="resultado-print"></div>
 
 <script>
 
-// Numeración
+// instalar
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt",(e)=>{
+ e.preventDefault();
+ deferredPrompt=e;
+ instalarBtn.style.display="block";
+ instalarBtn.onclick=()=>deferredPrompt.prompt();
+});
+
+// numero
 function generarNumero(){
-  let pv = puntoVenta.value;
-  let key = "contador_" + pv;
-  let contador = localStorage.getItem(key) || 0;
-  contador++;
-  localStorage.setItem(key, contador);
-  numero.value = pv + "-" + String(contador).padStart(3,"0");
+ let pv=puntoVenta.value;
+ let key="contador_"+pv;
+ let n=localStorage.getItem(key)||0;
+ n++;
+ localStorage.setItem(key,n);
+ numero.value=pv+"-"+String(n).padStart(3,"0");
 }
 
-// Paneles
+// panel
 function calcPaneles(){
-  panelW.value = cantPaneles.value * potPanel.value;
+ panelW.value=cantPaneles.value*potPanel.value;
 }
 
-// Cálculo
+// tipo
+function handleTipo(){
+ if(tipo.value==="on"){
+  bateria.disabled=true;
+  red.disabled=true;
+ }else{
+  bateria.disabled=false;
+  red.disabled=false;
+  manual.value="no";
+  manual.disabled=true;
+  usdW.disabled=true;
+ }
+}
+
+// manual
+function toggleManual(){
+ usdW.disabled=manual.value!=="si";
+}
+
+// USD/W
+function getUSDW(powerW){
+ if(manual.value==="si") return usdW.value;
+ let kWp=powerW/1000;
+ if(kWp<=10){
+  return complejidad.value==="simple"?0.10:0.15;
+ }else return 0.15;
+}
+
+// calcular
 function calcular(){
 
-  let powerW = Math.min(invW.value, panelW.value);
-  let kWp = powerW / 1000;
-  let usdW = kWp <= 10 ? (complejidad.value === "simple" ? 0.10 : 0.15) : 0.15;
+ let powerW=Math.min(invW.value,panelW.value);
+ let usdVal=usd.value;
 
-  let labor = powerW * usdW;
+ let labor = tipo.value==="on"
+   ? powerW*getUSDW(powerW)
+   : (equipos.value/usdVal)*0.16;
 
-  resultado.innerHTML = `<b>Mano de obra:</b> USD ${labor.toFixed(1)}`;
+ let viaticos=km.value*2*243;
+ let totalUSD=labor+(viaticos/usdVal);
+ let totalARS=totalUSD*usdVal;
 
-  // ===== ARMADO PDF =====
-  printArea.innerHTML = `
-    <div class="print-header">
-      <h2>PLEXUSOLAR</h2>
-      <div>CUIT: 23-28851599-9</div>
-    </div>
-
-    <div class="print-section">
-      <div><b>Presupuesto:</b> ${numero.value}</div>
-      <div><b>Punto de venta:</b> ${puntoVenta.options[puntoVenta.selectedIndex].text}</div>
-      <div><b>Fecha:</b> ${fecha.innerText}</div>
-    </div>
-
-    <div class="print-section">
-      <div class="print-title">Datos del cliente</div>
-      <div><b>Cliente:</b> ${cliente.value}</div>
-      <div><b>Ubicación:</b> ${ubicacion.value}</div>
-    </div>
-
-    <div class="print-section">
-      <div class="print-title">Resultado</div>
-      <div><b>Potencia considerada:</b> ${powerW} W</div>
-      <div><b>Mano de obra:</b> USD ${labor.toFixed(1)}</div>
-    </div>
-
-    <br>
-    <i>El presente reviste carácter de PRESUPUESTO.</i>
-  `;
+ resultado.innerHTML=`
+ <b>Mano de obra:</b> USD ${labor.toFixed(1)}<br>
+ <b>Viáticos:</b> ARS ${viaticos}<br>
+ <b>Total:</b> USD ${totalUSD.toFixed(1)}<br>
+ <b>Total:</b> ARS ${totalARS.toFixed(0)}
+ `;
 }
 
-// imprimir
+// PDF PRO
 function imprimir(){
-  window.print();
+
+ let powerW=Math.min(invW.value,panelW.value);
+
+ printArea.innerHTML=`
+ <div class="print-header">
+   <div>
+     <div class="print-title">PLEXUSOLAR</div>
+     <div>CUIT: 23-28851599-9</div>
+   </div>
+   <div>
+     <b>Presupuesto:</b> ${numero.value}<br>
+     <b>Fecha:</b> ${fecha.innerText}
+   </div>
+ </div>
+
+ <div class="print-section print-box">
+   <b>Punto de venta:</b> ${puntoVenta.options[puntoVenta.selectedIndex].text}<br>
+   <b>Cliente:</b> ${cliente.value}<br>
+   <b>Ubicación:</b> ${ubicacion.value}
+ </div>
+
+ <div class="print-section print-box">
+   <b>Datos técnicos</b><br><br>
+   Potencia: ${powerW} W<br>
+   Altura: ${altura.value || "-"} m<br>
+   Acceso: ${acceso.value}<br>
+   Distancia: ${km.value} km
+ </div>
+
+ <div class="print-section">
+   <table>
+     <tr><th>Concepto</th><th>Valor</th></tr>
+     <tr><td>Resultado</td><td>${resultado.innerHTML}</td></tr>
+   </table>
+ </div>
+
+ <div class="print-section">
+   <b>Observaciones:</b><br>
+   ${obs.value || "-"}
+ </div>
+
+ <br>
+ <i>El presente reviste carácter de PRESUPUESTO.</i>
+ `;
+
+ window.print();
 }
 
-fecha.innerText = new Date().toLocaleDateString();
+// init
+fecha.innerText=new Date().toLocaleDateString();
 generarNumero();
 calcPaneles();
 
