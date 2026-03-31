@@ -23,6 +23,26 @@
     margin-bottom: 10px;
   }
 
+  /* BOTÓN INSTALAR */
+  #instalarBtn {
+    display: none;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px; /* separación con el header */
+    border-radius: 8px;
+    background:#0a0a0a;
+    color:white;
+    border:none;
+    cursor:pointer;
+    font-weight:bold;
+  }
+
+  #instalarBtn:hover {
+    background: #1a1a1a; /* un tono más claro */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: all 0.2s ease-in-out;
+  }
+
   .app-header {
     display:flex;
     align-items:center;
@@ -100,7 +120,8 @@
 
 <body>
 
-<button id="instalarBtn" style="display:none;">Instalar App</button>
+<!-- BOTÓN INSTALAR ANTES DEL HEADER -->
+<button id="instalarBtn">Instalar App</button>
 
 <div class="app-header">
   <img src="icon-192.png">
