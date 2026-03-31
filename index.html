@@ -114,6 +114,13 @@
     color:red;
     font-weight:bold;
   }
+
+  .usdW-info {
+    font-size:12px;
+    color:#555;
+    margin-left:10px;
+  }
+
 </style>
 
 </head>
@@ -193,7 +200,12 @@
     <option value="compleja">Compleja</option>
   </select>
 
-  <label>¿Usar USD/W manual?</label> 
+  <!-- PREGUNTA USD/W MANUAL CON INFO AL LADO -->
+  <label>¿Usar USD/W manual?
+    <span class="usdW-info">
+      (Simple ≤10 kWp: 0.10 | Compleja ≤10 kWp: 0.15 | Simple >10 kWp: 0.15)
+    </span>
+  </label>
   <select id="manual" onchange="toggleManual()">
     <option value="no">No</option>
     <option value="si">Sí</option>
@@ -264,13 +276,13 @@
       bateria.disabled = true;
       red.disabled = true;
       equipos.disabled = true;
-      manual.disabled = false; // habilitamos USD/W manual
+      manual.disabled = false;
     } else {
       bateria.disabled = false;
       red.disabled = false;
       equipos.disabled = false;
-      manual.value = "no";       // desactivamos el manual
-      manual.disabled = true;    // y lo deshabilitamos
+      manual.value = "no";       
+      manual.disabled = true;    
       usdW.value = 0.2;
       usdW.disabled = true;
     }
@@ -285,9 +297,9 @@
     if(manual === "si") return usdW;
     let kWp = powerW / 1000;
     if(kWp <= 10){
-      return complejidad === "simple" ? 0.15 : 0.22;
+      return complejidad === "simple" ? 0.10 : 0.15;
     } else {
-      return 0.19;
+      return 0.15;
     }
   }
 
