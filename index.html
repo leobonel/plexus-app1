@@ -66,7 +66,6 @@ button {
 .result { margin-top:20px; }
 .warn { color:red; font-weight:bold; }
 
-/* PRINT */
 .resultado-print { display:none; }
 
 @media print {
@@ -258,24 +257,21 @@ function generarNumero(){
 
 // panel
 function calcPaneles(){
- panelW.value=cantPaneles.value*potPanel.value;
+ panelW.value = (cantPaneles.value || 0) * (potPanel.value || 0);
 }
 
-// tipo (CORREGIDO)
+// tipo
 function handleTipo(){
-
  if(tipo.value==="on"){
    equipos.disabled = true;
    bateria.disabled = true;
    red.disabled = true;
-
    manual.disabled = false;
    toggleManual();
  } else {
    equipos.disabled = false;
    bateria.disabled = false;
    red.disabled = false;
-
    manual.value = "no";
    manual.disabled = true;
    usdW.disabled = true;
@@ -289,8 +285,7 @@ function toggleManual(){
 
 // USD/W
 function getUSDW(powerW){
- if(manual.value==="si") return usdW.value;
-
+ if(manual.value==="si") return Number(usdW.value || 0);
  let kWp=powerW/1000;
  if(kWp<=10){
   return complejidad.value==="simple"?0.10:0.15;
@@ -300,33 +295,40 @@ function getUSDW(powerW){
 // calcular
 function calcular(){
 
- let powerW=Math.min(invW.value,panelW.value);
- let usdVal=usd.value;
+ let powerW = Math.min(Number(invW.value||0), Number(panelW.value||0));
+ let usdVal = Number(usd.value||1);
 
  let labor = tipo.value==="on"
    ? powerW*getUSDW(powerW)
-   : (equipos.value/usdVal)*0.16;
+   : (Number(equipos.value||0)/usdVal)*0.16;
 
- let viaticos=km.value*2*243;
- let totalUSD=labor+(viaticos/usdVal);
- let totalARS=totalUSD*usdVal;
+ let viaticos = Number(km.value||0)*2*243;
+ let totalUSD = labor+(viaticos/usdVal);
+ let totalARS = totalUSD*usdVal;
 
- let warn = panelW.value<invW.value ?
-   "<div class='warn'>⚠️ Sistema subdimensionado</div>" : "";
+ let warn = panelW.value<invW.value
+   ? "<div class='warn'>⚠️ Sistema subdimensionado en paneles respecto al inversor</div>"
+   : "";
 
  resultado.innerHTML=`
  ${warn}
  <b>Mano de obra:</b> USD ${labor.toFixed(1)}<br>
- <b>Viáticos:</b> ARS ${viaticos}<br>
+ <b>Viáticos:</b> ARS ${viaticos.toFixed(0)}<br>
  <b>Total:</b> USD ${totalUSD.toFixed(1)}<br>
- <b>Total:</b> ARS ${totalARS.toFixed(0)}
+ <b>Total:</b> ARS ${totalARS.toFixed(0)}<br><br>
+ <i>El presente reviste carácter de PRESUPUESTO.</i>
  `;
 }
 
-// PDF PRO
+// PDF
 function imprimir(){
 
- let powerW=Math.min(invW.value,panelW.value);
+ if(!resultado.innerHTML){
+   alert("Primero calculá el presupuesto");
+   return;
+ }
+
+ let powerW=Math.min(Number(invW.value||0), Number(panelW.value||0));
 
  printArea.innerHTML=`
  <div class="print-header">
@@ -357,7 +359,7 @@ function imprimir(){
  <div class="print-section">
    <table>
      <tr><th>Concepto</th><th>Valor</th></tr>
-     <tr><td>Resultado</td><td>${resultado.innerHTML}</td></tr>
+     <tr><td>Detalle</td><td>${resultado.innerHTML}</td></tr>
    </table>
  </div>
 
@@ -365,9 +367,6 @@ function imprimir(){
    <b>Observaciones:</b><br>
    ${obs.value || "-"}
  </div>
-
- <br>
- <i>El presente reviste carácter de PRESUPUESTO.</i>
  `;
 
  window.print();
