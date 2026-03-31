@@ -29,15 +29,6 @@ body {
   font-weight:bold;
 }
 
-.app-header {
-  display:flex;
-  gap:15px;
-  padding:12px;
-  background:#0a0a0a;
-  color:white;
-  border-radius:10px;
-}
-
 .form-section {
   background:#fff;
   padding:15px;
@@ -50,7 +41,6 @@ label { display:block; margin-top:10px; font-weight:bold; }
 input, select {
   width:100%;
   padding:8px;
-  margin-top:4px;
 }
 
 button {
@@ -62,15 +52,16 @@ button {
   border-radius:5px;
 }
 
-.usdW-info { font-size:12px; color:#555; }
-.result { margin-top:20px; }
 .warn { color:red; font-weight:bold; }
 
 .resultado-print { display:none; }
 
 @media print {
   body * { visibility:hidden; }
-  .resultado-print, .resultado-print * { visibility:visible; }
+
+  .resultado-print, .resultado-print * {
+    visibility:visible;
+  }
 
   .resultado-print {
     position:absolute;
@@ -78,29 +69,7 @@ button {
     left:0;
     width:100%;
     padding:30px;
-    font-size:14px;
   }
-
-  .print-header {
-    display:flex;
-    justify-content:space-between;
-    border-bottom:2px solid black;
-    margin-bottom:20px;
-  }
-
-  .print-section { margin-bottom:20px; }
-
-  table {
-    width:100%;
-    border-collapse:collapse;
-  }
-
-  th, td {
-    border:1px solid #ccc;
-    padding:8px;
-  }
-
-  th { background:#eee; }
 }
 </style>
 </head>
@@ -108,14 +77,6 @@ button {
 <body>
 
 <button id="instalarBtn">Instalar App</button>
-
-<div class="app-header">
-  <div>
-    <div style="font-size:20px;"><b>PLEXUSOLAR</b></div>
-    <div style="font-size:12px;">Leonardo Bonel</div>
-    <div style="font-size:11px;">CUIT: 23-28851599-9</div>
-  </div>
-</div>
 
 <div class="form-section">
 
@@ -148,133 +109,81 @@ button {
 
 <h3>Datos del sistema</h3>
 
-<label>Tipo de sistema</label> 
+<label>Tipo</label>
 <select id="tipo" onchange="handleTipo()">
   <option value="on">On-Grid</option>
-  <option value="off">Off-Grid / Híbrido</option>
+  <option value="off">Off-Grid</option>
 </select>
 
-<label>¿Incluye baterías?</label> 
-<select id="bateria">
-  <option value="no">No</option>
-  <option value="si">Sí</option>
-</select>
+<label>Potencia inversor</label>
+<input id="invW" value="5000">
 
-<label>¿Hay red eléctrica?</label> 
-<select id="red">
-  <option value="si">Sí</option>
-  <option value="no">No</option>
-</select>
+<label>Cantidad paneles</label>
+<input id="cantPaneles" value="10" oninput="calcPaneles()">
 
-<label>Potencia inversor (W)</label> 
-<input type="number" id="invW" value="5000">
+<label>Potencia panel</label>
+<input id="potPanel" value="550" oninput="calcPaneles()">
 
-<h4>Cálculo de paneles</h4>
-
-<label>Cantidad de paneles</label>
-<input type="number" id="cantPaneles" value="10" oninput="calcPaneles()">
-
-<label>Potencia por panel (W)</label> 
-<input type="number" id="potPanel" value="550" oninput="calcPaneles()">
-
-<label>Potencia paneles (W)</label> 
+<label>Total paneles</label>
 <input id="panelW" readonly>
 
-<label>Equipamiento (ARS)</label> 
-<input type="number" id="equipos">
+<label>Equipamiento</label>
+<input id="equipos">
 
-<label>Complejidad</label> 
-<select id="complejidad">
-  <option value="simple">Simple</option>
-  <option value="compleja">Compleja</option>
-</select>
-
-<label>¿Usar USD/W manual?
-<span class="usdW-info">
-(Simple ≤10 kWp: 0.10 | Compleja ≤10 kWp: 0.15 | >10 kWp: 0.15)
-</span>
-</label>
-
+<label>USD/W manual</label>
 <select id="manual" onchange="toggleManual()">
   <option value="no">No</option>
   <option value="si">Sí</option>
 </select>
 
-<label>Valor USD/W</label> 
-<input type="number" id="usdW" value="0.2" disabled>
+<input id="usdW" value="0.2" disabled>
 
 </div>
 
 <div class="form-section">
 
-<h3>Logística</h3>
-
-<label>Altura (m)</label>
-<input id="altura">
-
-<label>Acceso complejo</label>
-<select id="acceso">
-  <option value="no">No</option>
-  <option value="si">Sí</option>
-</select>
-
-<label>Distancia (km)</label>
-<input type="number" id="km" value="10">
-
-<label>Observaciones</label>
-<input id="obs">
+<label>KM</label>
+<input id="km" value="10">
 
 <button onclick="calcular()">Calcular</button>
 
 </div>
 
-<div class="result" id="resultado"></div>
+<div id="resultado"></div>
 
-<button onclick="imprimir()">Exportar PDF</button>
+<button onclick="imprimir()">PDF</button>
 
 <div id="printArea" class="resultado-print"></div>
 
 <script>
 
-// instalar
-let deferredPrompt;
-window.addEventListener("beforeinstallprompt",(e)=>{
- e.preventDefault();
- deferredPrompt=e;
- instalarBtn.style.display="block";
- instalarBtn.onclick=()=>deferredPrompt.prompt();
-});
+// init
+fecha.innerText = new Date().toLocaleDateString();
 
 // numero
 function generarNumero(){
  let pv=puntoVenta.value;
- let key="contador_"+pv;
- let n=localStorage.getItem(key)||0;
+ let n=localStorage.getItem(pv)||0;
  n++;
- localStorage.setItem(key,n);
- numero.value=pv+"-"+String(n).padStart(3,"0");
+ localStorage.setItem(pv,n);
+ numero.value=pv+"-"+n;
 }
 
-// panel
+// paneles
 function calcPaneles(){
- panelW.value = (cantPaneles.value || 0) * (potPanel.value || 0);
+ panelW.value = Number(cantPaneles.value||0)*Number(potPanel.value||0);
 }
 
 // tipo
 function handleTipo(){
  if(tipo.value==="on"){
-   equipos.disabled = true;
-   bateria.disabled = true;
-   red.disabled = true;
-   manual.disabled = false;
-   toggleManual();
- } else {
-   equipos.disabled = false;
-   bateria.disabled = false;
-   red.disabled = false;
-   manual.value = "no";
-   manual.disabled = true;
-   usdW.disabled = true;
+  equipos.disabled=true;
+  manual.disabled=false;
+ }else{
+  equipos.disabled=false;
+  manual.value="no";
+  manual.disabled=true;
+  usdW.disabled=true;
  }
 }
 
@@ -283,97 +192,58 @@ function toggleManual(){
  usdW.disabled = manual.value!=="si";
 }
 
-// USD/W
-function getUSDW(powerW){
- if(manual.value==="si") return Number(usdW.value || 0);
- let kWp=powerW/1000;
- if(kWp<=10){
-  return complejidad.value==="simple"?0.10:0.15;
- } else return 0.15;
-}
-
 // calcular
 function calcular(){
 
- let powerW = Math.min(Number(invW.value||0), Number(panelW.value||0));
+ let inv = Number(invW.value||0);
+ let pan = Number(panelW.value||0);
  let usdVal = Number(usd.value||1);
+ let kmVal = Number(km.value||0);
+
+ let power = Math.min(inv, pan);
 
  let labor = tipo.value==="on"
-   ? powerW*getUSDW(powerW)
+   ? power*(manual.value==="si"?Number(usdW.value):0.1)
    : (Number(equipos.value||0)/usdVal)*0.16;
 
- let viaticos = Number(km.value||0)*2*243;
- let totalUSD = labor+(viaticos/usdVal);
- let totalARS = totalUSD*usdVal;
+ let viaticos = kmVal*2*243;
 
- let warn = panelW.value<invW.value
+ let warn = pan < inv
    ? "<div class='warn'>⚠️ Sistema subdimensionado en paneles respecto al inversor</div>"
    : "";
 
- resultado.innerHTML=`
+ resultado.innerHTML = `
  ${warn}
- <b>Mano de obra:</b> USD ${labor.toFixed(1)}<br>
- <b>Viáticos:</b> ARS ${viaticos.toFixed(0)}<br>
- <b>Total:</b> USD ${totalUSD.toFixed(1)}<br>
- <b>Total:</b> ARS ${totalARS.toFixed(0)}<br><br>
+ Mano de obra: USD ${labor.toFixed(1)}<br>
+ Viáticos: ARS ${viaticos}<br>
+ Total: USD ${(labor+(viaticos/usdVal)).toFixed(1)}<br><br>
  <i>El presente reviste carácter de PRESUPUESTO.</i>
  `;
 }
 
-// PDF
+// PDF (CORREGIDO)
 function imprimir(){
 
  if(!resultado.innerHTML){
-   alert("Primero calculá el presupuesto");
-   return;
+  alert("Calculá primero");
+  return;
  }
 
- let powerW=Math.min(Number(invW.value||0), Number(panelW.value||0));
+ printArea.innerHTML = `
+ <h2>PLEXUSOLAR</h2>
+ <b>Presupuesto:</b> ${numero.value}<br>
+ <b>Fecha:</b> ${fecha.innerText}<br><br>
 
- printArea.innerHTML=`
- <div class="print-header">
-   <div>
-     <h2>PLEXUSOLAR</h2>
-     <div>CUIT: 23-28851599-9</div>
-   </div>
-   <div>
-     <b>Presupuesto:</b> ${numero.value}<br>
-     <b>Fecha:</b> ${fecha.innerText}
-   </div>
- </div>
+ <b>Cliente:</b> ${cliente.value}<br>
+ <b>Ubicación:</b> ${ubicacion.value}<br><br>
 
- <div class="print-section">
-   <b>Punto de venta:</b> ${puntoVenta.options[puntoVenta.selectedIndex].text}<br>
-   <b>Cliente:</b> ${cliente.value}<br>
-   <b>Ubicación:</b> ${ubicacion.value}
- </div>
-
- <div class="print-section">
-   <b>Datos técnicos</b><br><br>
-   Potencia: ${powerW} W<br>
-   Altura: ${altura.value || "-"} m<br>
-   Acceso: ${acceso.value}<br>
-   Distancia: ${km.value} km
- </div>
-
- <div class="print-section">
-   <table>
-     <tr><th>Concepto</th><th>Valor</th></tr>
-     <tr><td>Detalle</td><td>${resultado.innerHTML}</td></tr>
-   </table>
- </div>
-
- <div class="print-section">
-   <b>Observaciones:</b><br>
-   ${obs.value || "-"}
- </div>
+ ${resultado.innerHTML}
  `;
 
  window.print();
 }
 
 // init
-fecha.innerText=new Date().toLocaleDateString();
 generarNumero();
 calcPaneles();
 handleTipo();
