@@ -6,7 +6,6 @@
 
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a0a0a">
-
 <link rel="icon" href="icon-192.png">
 
 <style>
@@ -63,24 +62,16 @@ button {
   border-radius:5px;
 }
 
-.usdW-info {
-  font-size:12px;
-  color:#555;
-}
-
+.usdW-info { font-size:12px; color:#555; }
 .result { margin-top:20px; }
 .warn { color:red; font-weight:bold; }
 
-/* ===== PRINT PRO ===== */
+/* PRINT */
 .resultado-print { display:none; }
 
 @media print {
-
   body * { visibility:hidden; }
-
-  .resultado-print, .resultado-print * {
-    visibility:visible;
-  }
+  .resultado-print, .resultado-print * { visibility:visible; }
 
   .resultado-print {
     position:absolute;
@@ -96,23 +87,9 @@ button {
     justify-content:space-between;
     border-bottom:2px solid black;
     margin-bottom:20px;
-    padding-bottom:10px;
   }
 
-  .print-title {
-    font-size:20px;
-    font-weight:bold;
-  }
-
-  .print-section {
-    margin-bottom:20px;
-  }
-
-  .print-box {
-    border:1px solid #ccc;
-    padding:10px;
-    border-radius:5px;
-  }
+  .print-section { margin-bottom:20px; }
 
   table {
     width:100%;
@@ -122,17 +99,9 @@ button {
   th, td {
     border:1px solid #ccc;
     padding:8px;
-    text-align:left;
   }
 
-  th {
-    background:#f0f0f0;
-  }
-
-  .total {
-    font-size:16px;
-    font-weight:bold;
-  }
+  th { background:#eee; }
 }
 </style>
 </head>
@@ -292,32 +261,40 @@ function calcPaneles(){
  panelW.value=cantPaneles.value*potPanel.value;
 }
 
-// tipo
+// tipo (CORREGIDO)
 function handleTipo(){
+
  if(tipo.value==="on"){
-  bateria.disabled=true;
-  red.disabled=true;
- }else{
-  bateria.disabled=false;
-  red.disabled=false;
-  manual.value="no";
-  manual.disabled=true;
-  usdW.disabled=true;
+   equipos.disabled = true;
+   bateria.disabled = true;
+   red.disabled = true;
+
+   manual.disabled = false;
+   toggleManual();
+ } else {
+   equipos.disabled = false;
+   bateria.disabled = false;
+   red.disabled = false;
+
+   manual.value = "no";
+   manual.disabled = true;
+   usdW.disabled = true;
  }
 }
 
 // manual
 function toggleManual(){
- usdW.disabled=manual.value!=="si";
+ usdW.disabled = manual.value!=="si";
 }
 
 // USD/W
 function getUSDW(powerW){
  if(manual.value==="si") return usdW.value;
+
  let kWp=powerW/1000;
  if(kWp<=10){
   return complejidad.value==="simple"?0.10:0.15;
- }else return 0.15;
+ } else return 0.15;
 }
 
 // calcular
@@ -334,7 +311,11 @@ function calcular(){
  let totalUSD=labor+(viaticos/usdVal);
  let totalARS=totalUSD*usdVal;
 
+ let warn = panelW.value<invW.value ?
+   "<div class='warn'>⚠️ Sistema subdimensionado</div>" : "";
+
  resultado.innerHTML=`
+ ${warn}
  <b>Mano de obra:</b> USD ${labor.toFixed(1)}<br>
  <b>Viáticos:</b> ARS ${viaticos}<br>
  <b>Total:</b> USD ${totalUSD.toFixed(1)}<br>
@@ -350,7 +331,7 @@ function imprimir(){
  printArea.innerHTML=`
  <div class="print-header">
    <div>
-     <div class="print-title">PLEXUSOLAR</div>
+     <h2>PLEXUSOLAR</h2>
      <div>CUIT: 23-28851599-9</div>
    </div>
    <div>
@@ -359,13 +340,13 @@ function imprimir(){
    </div>
  </div>
 
- <div class="print-section print-box">
+ <div class="print-section">
    <b>Punto de venta:</b> ${puntoVenta.options[puntoVenta.selectedIndex].text}<br>
    <b>Cliente:</b> ${cliente.value}<br>
    <b>Ubicación:</b> ${ubicacion.value}
  </div>
 
- <div class="print-section print-box">
+ <div class="print-section">
    <b>Datos técnicos</b><br><br>
    Potencia: ${powerW} W<br>
    Altura: ${altura.value || "-"} m<br>
@@ -396,6 +377,7 @@ function imprimir(){
 fecha.innerText=new Date().toLocaleDateString();
 generarNumero();
 calcPaneles();
+handleTipo();
 
 </script>
 
