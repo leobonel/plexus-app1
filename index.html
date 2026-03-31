@@ -29,6 +29,15 @@ body {
   font-weight:bold;
 }
 
+.app-header {
+  display:flex;
+  gap:15px;
+  padding:12px;
+  background:#0a0a0a;
+  color:white;
+  border-radius:10px;
+}
+
 .form-section {
   background:#fff;
   padding:15px;
@@ -41,6 +50,7 @@ label { display:block; margin-top:10px; font-weight:bold; }
 input, select {
   width:100%;
   padding:8px;
+  margin-top:4px;
 }
 
 button {
@@ -52,6 +62,8 @@ button {
   border-radius:5px;
 }
 
+.usdW-info { font-size:12px; color:#555; }
+.result { margin-top:20px; }
 .warn { color:red; font-weight:bold; }
 
 .resultado-print { display:none; }
@@ -69,7 +81,32 @@ button {
     left:0;
     width:100%;
     padding:30px;
+    font-size:14px;
   }
+
+  .print-header {
+    display:flex;
+    justify-content:space-between;
+    border-bottom:2px solid black;
+    margin-bottom:20px;
+    padding-bottom:10px;
+  }
+
+  .print-section {
+    margin-bottom:15px;
+  }
+
+  table {
+    width:100%;
+    border-collapse:collapse;
+  }
+
+  th, td {
+    border:1px solid #ccc;
+    padding:8px;
+  }
+
+  th { background:#eee; }
 }
 </style>
 </head>
@@ -77,6 +114,14 @@ button {
 <body>
 
 <button id="instalarBtn">Instalar App</button>
+
+<div class="app-header">
+  <div>
+    <div style="font-size:20px;"><b>PLEXUSOLAR</b></div>
+    <div style="font-size:12px;">Leonardo Bonel</div>
+    <div style="font-size:11px;">CUIT: 23-28851599-9</div>
+  </div>
+</div>
 
 <div class="form-section">
 
@@ -109,87 +154,148 @@ button {
 
 <h3>Datos del sistema</h3>
 
-<label>Tipo</label>
+<label>Tipo de sistema</label> 
 <select id="tipo" onchange="handleTipo()">
   <option value="on">On-Grid</option>
-  <option value="off">Off-Grid</option>
+  <option value="off">Off-Grid / Híbrido</option>
 </select>
 
-<label>Potencia inversor</label>
-<input id="invW" value="5000">
+<label>¿Incluye baterías?</label> 
+<select id="bateria">
+  <option value="no">No</option>
+  <option value="si">Sí</option>
+</select>
 
-<label>Cantidad paneles</label>
-<input id="cantPaneles" value="10" oninput="calcPaneles()">
+<label>¿Hay red eléctrica?</label> 
+<select id="red">
+  <option value="si">Sí</option>
+  <option value="no">No</option>
+</select>
 
-<label>Potencia panel</label>
-<input id="potPanel" value="550" oninput="calcPaneles()">
+<label>Potencia inversor (W)</label> 
+<input type="number" id="invW" value="5000">
 
-<label>Total paneles</label>
+<h4>Cálculo de paneles</h4>
+
+<label>Cantidad de paneles</label>
+<input type="number" id="cantPaneles" value="10" oninput="calcPaneles()">
+
+<label>Potencia por panel (W)</label> 
+<input type="number" id="potPanel" value="550" oninput="calcPaneles()">
+
+<label>Potencia paneles (W)</label> 
 <input id="panelW" readonly>
 
-<label>Equipamiento</label>
-<input id="equipos">
+<label>Equipamiento (ARS)</label> 
+<input type="number" id="equipos">
 
-<label>USD/W manual</label>
+<label>Complejidad</label> 
+<select id="complejidad">
+  <option value="simple">Simple</option>
+  <option value="compleja">Compleja</option>
+</select>
+
+<label>¿Usar USD/W manual?
+<span class="usdW-info">
+(Simple ≤10 kWp: 0.10 | Compleja ≤10 kWp: 0.15 | >10 kWp: 0.15)
+</span>
+</label>
+
 <select id="manual" onchange="toggleManual()">
   <option value="no">No</option>
   <option value="si">Sí</option>
 </select>
 
-<input id="usdW" value="0.2" disabled>
+<label>Valor USD/W</label> 
+<input type="number" id="usdW" value="0.2" disabled>
 
 </div>
 
 <div class="form-section">
 
-<label>KM</label>
-<input id="km" value="10">
+<h3>Logística</h3>
+
+<label>Altura (m)</label>
+<input id="altura">
+
+<label>Acceso complejo</label>
+<select id="acceso">
+  <option value="no">No</option>
+  <option value="si">Sí</option>
+</select>
+
+<label>Distancia (km)</label>
+<input type="number" id="km" value="10">
+
+<label>Observaciones</label>
+<input id="obs">
 
 <button onclick="calcular()">Calcular</button>
 
 </div>
 
-<div id="resultado"></div>
+<div class="result" id="resultado"></div>
 
-<button onclick="imprimir()">PDF</button>
+<button onclick="imprimir()">Exportar PDF</button>
 
 <div id="printArea" class="resultado-print"></div>
 
 <script>
 
-// init
-fecha.innerText = new Date().toLocaleDateString();
+// instalar
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt",(e)=>{
+ e.preventDefault();
+ deferredPrompt=e;
+ instalarBtn.style.display="block";
+ instalarBtn.onclick=()=>deferredPrompt.prompt();
+});
 
 // numero
 function generarNumero(){
  let pv=puntoVenta.value;
- let n=localStorage.getItem(pv)||0;
+ let key="contador_"+pv;
+ let n=localStorage.getItem(key)||0;
  n++;
- localStorage.setItem(pv,n);
- numero.value=pv+"-"+n;
+ localStorage.setItem(key,n);
+ numero.value=pv+"-"+String(n).padStart(3,"0");
 }
 
-// paneles
+// panel
 function calcPaneles(){
- panelW.value = Number(cantPaneles.value||0)*Number(potPanel.value||0);
+ panelW.value = Number(cantPaneles.value||0) * Number(potPanel.value||0);
 }
 
 // tipo
 function handleTipo(){
  if(tipo.value==="on"){
-  equipos.disabled=true;
-  manual.disabled=false;
- }else{
-  equipos.disabled=false;
-  manual.value="no";
-  manual.disabled=true;
-  usdW.disabled=true;
+   equipos.disabled = true;
+   bateria.disabled = true;
+   red.disabled = true;
+   manual.disabled = false;
+   toggleManual();
+ } else {
+   equipos.disabled = false;
+   bateria.disabled = false;
+   red.disabled = false;
+   manual.value = "no";
+   manual.disabled = true;
+   usdW.disabled = true;
  }
 }
 
 // manual
 function toggleManual(){
  usdW.disabled = manual.value!=="si";
+}
+
+// USD/W
+function getUSDW(powerW){
+ if(manual.value==="si") return Number(usdW.value || 0);
+ let kWp=powerW/1000;
+ if(kWp<=10){
+  return complejidad.value==="simple"?0.10:0.15;
+ } else return 0.15;
 }
 
 // calcular
@@ -199,51 +305,73 @@ function calcular(){
  let pan = Number(panelW.value||0);
  let usdVal = Number(usd.value||1);
  let kmVal = Number(km.value||0);
+ let equiposVal = Number(equipos.value||0);
 
- let power = Math.min(inv, pan);
+ let powerW = Math.min(inv, pan);
 
  let labor = tipo.value==="on"
-   ? power*(manual.value==="si"?Number(usdW.value):0.1)
-   : (Number(equipos.value||0)/usdVal)*0.16;
+   ? powerW * getUSDW(powerW)
+   : (equiposVal / usdVal) * 0.16;
 
- let viaticos = kmVal*2*243;
+ let viaticos = kmVal * 2 * 243;
 
- let warn = pan < inv
+ let totalUSD = labor + (viaticos / usdVal);
+ let totalARS = totalUSD * usdVal;
+
+ let warning = pan < inv
    ? "<div class='warn'>⚠️ Sistema subdimensionado en paneles respecto al inversor</div>"
    : "";
 
  resultado.innerHTML = `
- ${warn}
- Mano de obra: USD ${labor.toFixed(1)}<br>
- Viáticos: ARS ${viaticos}<br>
- Total: USD ${(labor+(viaticos/usdVal)).toFixed(1)}<br><br>
+ ${warning}
+ <b>Mano de obra:</b> USD ${labor.toFixed(1)} <br>
+ <b>Viáticos:</b> ARS ${viaticos.toFixed(0)} <br>
+ <b>Total:</b> USD ${totalUSD.toFixed(1)} <br>
+ <b>Total:</b> ARS ${totalARS.toFixed(0)} <br><br>
+ <b>Potencia considerada:</b> ${powerW} W <br><br>
  <i>El presente reviste carácter de PRESUPUESTO.</i>
  `;
 }
 
-// PDF (CORREGIDO)
+// imprimir
 function imprimir(){
 
  if(!resultado.innerHTML){
-  alert("Calculá primero");
-  return;
+   alert("Primero calculá el presupuesto");
+   return;
  }
 
+ let texto = resultado.innerText;
+
  printArea.innerHTML = `
- <h2>PLEXUSOLAR</h2>
- <b>Presupuesto:</b> ${numero.value}<br>
- <b>Fecha:</b> ${fecha.innerText}<br><br>
+ <div class="print-header">
+   <div>
+     <h2>PLEXUSOLAR</h2>
+     <div>CUIT: 23-28851599-9</div>
+   </div>
+   <div>
+     <b>Presupuesto:</b> ${numero.value}<br>
+     <b>Fecha:</b> ${fecha.innerText}
+   </div>
+ </div>
 
- <b>Cliente:</b> ${cliente.value}<br>
- <b>Ubicación:</b> ${ubicacion.value}<br><br>
+ <div class="print-section">
+   <b>Punto de venta:</b> ${puntoVenta.options[puntoVenta.selectedIndex].text}<br>
+   <b>Cliente:</b> ${cliente.value}<br>
+   <b>Ubicación:</b> ${ubicacion.value}
+ </div>
 
- ${resultado.innerHTML}
+ <div class="print-section">
+   <b>Resultado</b><br><br>
+   ${texto}
+ </div>
  `;
 
  window.print();
 }
 
 // init
+fecha.innerText=new Date().toLocaleDateString();
 generarNumero();
 calcPaneles();
 handleTipo();
