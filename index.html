@@ -19,28 +19,17 @@
     background: #f4f6f8;
   }
 
-  h1, h3, h4 {
-    margin-bottom: 10px;
-  }
-
-  /* BOTÓN INSTALAR */
   #instalarBtn {
     display: none;
     width: 100%;
     padding: 10px;
-    margin-bottom: 15px; /* separación con el header */
+    margin-bottom: 15px;
     border-radius: 8px;
-    background:#28a745; /* verde para destacar */
+    background:#28a745;
     color:white;
     border:none;
     cursor:pointer;
     font-weight:bold;
-    transition: all 0.2s ease-in-out;
-  }
-
-  #instalarBtn:hover {
-    background: #218838; /* verde más oscuro al pasar el mouse */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
   }
 
   .app-header {
@@ -58,10 +47,6 @@
     width:50px;
     height:50px;
     border-radius:10px;
-  }
-
-  .app-header div {
-    line-height:1.2;
   }
 
   .form-section {
@@ -84,24 +69,22 @@
     margin-top:4px;
     border-radius:5px;
     border:1px solid #ccc;
-    box-sizing:border-box;
-  }
-
-  input:focus, select:focus {
-    outline:none;
-    border-color:#0a0a0a;
-    background:#fff;
-    box-shadow:0 0 0 2px rgba(0,0,0,0.05);
   }
 
   button {
     padding:10px 15px;
     margin-top:10px;
-    cursor:pointer;
     border:none;
     border-radius:5px;
     background:#0a0a0a;
     color:white;
+    cursor:pointer;
+  }
+
+  .usdW-info {
+    font-size:12px;
+    color:#555;
+    margin-left:10px;
   }
 
   .result {
@@ -114,28 +97,19 @@
     color:red;
     font-weight:bold;
   }
-
-  .usdW-info {
-    font-size:12px;
-    color:#555;
-    margin-left:10px;
-  }
-
 </style>
-
 </head>
 
 <body>
 
-<!-- BOTÓN INSTALAR ANTES DEL HEADER -->
 <button id="instalarBtn">Instalar App</button>
 
 <div class="app-header">
   <img src="icon-192.png">
   <div>
     <div style="font-size:20px; font-weight:bold;">PLEXUSOLAR</div>
-    <div style="font-size:12px; opacity:0.85;">Leonardo Bonel</div>
-    <div style="font-size:11px; opacity:0.7;">CUIT: 23-28851599-9</div>
+    <div style="font-size:12px;">Leonardo Bonel</div>
+    <div style="font-size:11px;">CUIT: 23-28851599-9</div>
   </div>
 </div>
 
@@ -147,7 +121,15 @@
   <input type="number" id="usd" value="1000" />
 
   <label>N° Presupuesto</label> 
-  <input id="numero" />
+  <input id="numero" readonly />
+
+  <label>Punto de Venta</label>
+  <select id="puntoVenta" onchange="generarNumero()">
+    <option value="CG">Casagrande</option>
+    <option value="LF">La Falda</option>
+    <option value="VA">Villa Allende</option>
+    <option value="RC">Río Cuarto</option>
+  </select>
 
   <label>Cliente</label> 
   <input id="cliente" />
@@ -200,12 +182,12 @@
     <option value="compleja">Compleja</option>
   </select>
 
-  <!-- PREGUNTA USD/W MANUAL CON INFO AL LADO -->
   <label>¿Usar USD/W manual?
     <span class="usdW-info">
       (Simple ≤10 kWp: 0.10 | Compleja ≤10 kWp: 0.15 | Simple >10 kWp: 0.15)
     </span>
   </label>
+
   <select id="manual" onchange="toggleManual()">
     <option value="no">No</option>
     <option value="si">Sí</option>
@@ -240,120 +222,70 @@
 <button onclick="window.print()">Exportar PDF</button>
 
 <script>
-  // ===== INSTALACIÓN =====
-  let deferredPrompt;
-  window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    const btn = document.getElementById("instalarBtn");
-    btn.style.display = "block";
-    btn.onclick = () => {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(() => {
-        deferredPrompt = null;
-      });
-    };
-  });
 
-  // ===== LÓGICA =====
-  document.getElementById("fecha").innerText = new Date().toLocaleDateString();
+// ===== NUMERACIÓN AUTOMÁTICA =====
+function generarNumero(){
+  let pv = document.getElementById("puntoVenta").value;
 
-  function calcPaneles(){
-    let cant = Number(document.getElementById("cantPaneles").value);
-    let pot = Number(document.getElementById("potPanel").value);
-    document.getElementById("panelW").value = cant * pot;
+  let key = "contador_" + pv;
+  let contador = localStorage.getItem(key) || 0;
+  contador++;
+
+  localStorage.setItem(key, contador);
+
+  let numero = pv + "-" + String(contador).padStart(3, "0");
+  document.getElementById("numero").value = numero;
+}
+
+// ===== INSTALACIÓN =====
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById("instalarBtn");
+  btn.style.display = "block";
+  btn.onclick = () => deferredPrompt.prompt();
+});
+
+// ===== LÓGICA ORIGINAL =====
+document.getElementById("fecha").innerText = new Date().toLocaleDateString();
+
+function calcPaneles(){
+  let cant = Number(cantPaneles.value);
+  let pot = Number(potPanel.value);
+  panelW.value = cant * pot;
+}
+
+function handleTipo(){
+  let tipo = tipoSelect.value;
+}
+
+function toggleManual(){
+  usdW.disabled = manual.value !== "si";
+}
+
+function getUSDW(powerW, complejidad){
+  let kWp = powerW / 1000;
+  if(kWp <= 10){
+    return complejidad === "simple" ? 0.10 : 0.15;
+  } else {
+    return 0.15;
   }
+}
 
-  function handleTipo(){
-    let tipo = document.getElementById("tipo").value;
-    let bateria = document.getElementById("bateria");
-    let red = document.getElementById("red");
-    let equipos = document.getElementById("equipos");
-    let manual = document.getElementById("manual");
-    let usdW = document.getElementById("usdW");
+function calcular(){
+  let powerW = Math.min(invW.value, panelW.value);
+  let labor = powerW * getUSDW(powerW, complejidad.value);
 
-    if(tipo === "on"){
-      bateria.disabled = true;
-      red.disabled = true;
-      equipos.disabled = true;
-      manual.disabled = false;
-    } else {
-      bateria.disabled = false;
-      red.disabled = false;
-      equipos.disabled = false;
-      manual.value = "no";       
-      manual.disabled = true;    
-      usdW.value = 0.2;
-      usdW.disabled = true;
-    }
-  }
+  resultado.innerHTML = `
+    <b>Presupuesto:</b> ${numero.value} <br>
+    <b>Mano de obra:</b> USD ${labor.toFixed(1)}
+  `;
+}
 
-  function toggleManual(){
-    let manual = document.getElementById("manual").value;
-    document.getElementById("usdW").disabled = manual !== "si";
-  }
+generarNumero();
+calcPaneles();
 
-  function getUSDW(powerW, complejidad, manual, usdW){
-    if(manual === "si") return usdW;
-    let kWp = powerW / 1000;
-    if(kWp <= 10){
-      return complejidad === "simple" ? 0.10 : 0.15;
-    } else {
-      return 0.15;
-    }
-  }
-
-  function calcular(){
-    let tipo = document.getElementById("tipo").value;
-    let bateria = document.getElementById("bateria").value;
-    let invW = Number(document.getElementById("invW").value);
-    let panelW = Number(document.getElementById("panelW").value);
-    let powerW = Math.min(invW || 0, panelW || 0);
-    let equiposARS = Number(document.getElementById("equipos").value);
-    let complejidad = document.getElementById("complejidad").value;
-    let manual = document.getElementById("manual").value;
-    let usdW = Number(document.getElementById("usdW").value);
-    let km = Number(document.getElementById("km").value);
-    let usd = Number(document.getElementById("usd").value);
-    let altura = document.getElementById("altura").value;
-    let acceso = document.getElementById("acceso").value;
-    let red = document.getElementById("red").value;
-    let obs = document.getElementById("obs").value;
-
-    let labor = 0;
-    if(tipo === "on"){
-      labor = powerW * getUSDW(powerW, complejidad, manual, usdW);
-    } else {
-      // Off-Grid/Híbrido siempre 16%
-      labor = (bateria === "si") ? (equiposARS / usd) * 0.16 : powerW * 0.16;
-    }
-
-    let viaticos = km * 2 * 243;
-    let totalUSD = labor + (viaticos / usd);
-    let totalARS = totalUSD * usd;
-    let warning = "";
-    if(panelW < invW){
-      warning = "<div class='warn'>⚠️ Sistema subdimensionado en paneles respecto al inversor</div>";
-    }
-
-    document.getElementById("resultado").innerHTML = `
-      ${warning}
-      <b>Mano de obra:</b> USD ${labor.toFixed(1)} <br>
-      <b>Viáticos:</b> ARS ${viaticos.toFixed(1)} <br>
-      <b>Total:</b> USD ${totalUSD.toFixed(1)} <br>
-      <b>Total:</b> ARS ${totalARS.toFixed(1)} <br><br>
-      <b>Potencia considerada:</b> ${powerW} W <br>
-      <b>Altura:</b> ${altura || "-"} m | 
-      <b>Acceso complejo:</b> ${acceso} <br>
-      <b>Red en sitio:</b> ${tipo === "off" ? red : "-"} <br>
-      <b>Observaciones:</b> ${obs || "-"} <br><br>
-      <i>El presente reviste carácter de PRESUPUESTO.</i>
-    `;
-  }
-
-  calcPaneles();
-  handleTipo();
-  toggleManual();
 </script>
 
 </body>
