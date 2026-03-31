@@ -257,14 +257,22 @@
     let bateria = document.getElementById("bateria");
     let red = document.getElementById("red");
     let equipos = document.getElementById("equipos");
+    let manual = document.getElementById("manual");
+    let usdW = document.getElementById("usdW");
+
     if(tipo === "on"){
       bateria.disabled = true;
       red.disabled = true;
       equipos.disabled = true;
+      manual.disabled = false; // habilitamos USD/W manual
     } else {
       bateria.disabled = false;
       red.disabled = false;
       equipos.disabled = false;
+      manual.value = "no";       // desactivamos el manual
+      manual.disabled = true;    // y lo deshabilitamos
+      usdW.value = 0.2;
+      usdW.disabled = true;
     }
   }
 
@@ -304,12 +312,8 @@
     if(tipo === "on"){
       labor = powerW * getUSDW(powerW, complejidad, manual, usdW);
     } else {
-      if(bateria === "si"){
-        let equiposUSD = equiposARS / usd;
-        labor = equiposUSD * 0.16;
-      } else {
-        labor = powerW * getUSDW(powerW, complejidad, manual, usdW);
-      }
+      // Off-Grid/Híbrido siempre 16%
+      labor = (bateria === "si") ? (equiposARS / usd) * 0.16 : powerW * 0.16;
     }
 
     let viaticos = km * 2 * 243;
